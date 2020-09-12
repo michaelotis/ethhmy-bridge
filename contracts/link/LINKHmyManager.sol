@@ -1,9 +1,12 @@
 pragma solidity 0.5.17;
 
 import "./ILINK.sol";
+import "../lib/TokenManager.sol";
 
 contract LINKHmyManager {
-    ILINK public link_;
+    ILINK public hLINK;
+    address public eLINK;
+    address public tokenManager;
 
     mapping(bytes32 => bool) public usedEvents_;
 
@@ -36,12 +39,28 @@ contract LINKHmyManager {
 
     /**
      * @dev constructor
-     * @param link token contract address on harmony chain, e.g., hrc20
+     * @param _hLINK harmony token contract address
+     * @param _eLINK ethereum token contract address
+     * @param _tokenManager token manager contract address
      */
-    constructor(ILINK link) public {
+    constructor(
+        address _hLINK,
+        address _eLINK,
+        address _tokenManager
+    ) public {
         owner = msg.sender;
         wards[msg.sender] = 1;
-        link_ = link;
+        hLINK = ILINK(_hLINK);
+        eLINK = _eLINK;
+        tokenManager = _tokenManager;
+        TokenManager(tokenManager).registerToken(eLINK, address(hLINK));
+    }
+
+    /**
+     * @dev deregister token mapping in the token manager
+     */
+    function deregister() public auth {
+        TokenManager(tokenManager).removeToken(eLINK, 10**27);
     }
 
     /**
@@ -51,10 +70,10 @@ contract LINKHmyManager {
      */
     function burnToken(uint256 amount, address recipient) public {
         require(
-            link_.transferFrom(msg.sender, address(this), amount),
+            hLINK.transferFrom(msg.sender, address(this), amount),
             "HmyManager/burn failed"
         );
-        emit Burned(address(link_), msg.sender, amount, recipient);
+        emit Burned(address(hLINK), msg.sender, amount, recipient);
     }
 
     /**
@@ -73,7 +92,7 @@ contract LINKHmyManager {
             "HmyManager/The unlock event cannot be reused"
         );
         usedEvents_[receiptId] = true;
-        require(link_.transfer(recipient, amount), "HmyManager/mint failed");
+        require(hLINK.transfer(recipient, amount), "HmyManager/mint failed");
         emit Minted(amount, recipient);
     }
 }

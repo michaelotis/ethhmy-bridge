@@ -1,9 +1,12 @@
 pragma solidity 0.5.17;
 
 import "./IBUSD.sol";
+import "../lib/TokenManager.sol";
 
 contract BUSDHmyManager {
-    IBUSD public busd_;
+    IBUSD public hBUSD;
+    address public eBUSD;
+    address public tokenManager;
 
     mapping(bytes32 => bool) public usedEvents_;
 
@@ -36,12 +39,28 @@ contract BUSDHmyManager {
 
     /**
      * @dev constructor
-     * @param busd token contract address on harmony chain, e.g., hrc20
+     * @param _hBUSD harmony busd token contract address
+     * @param _eBUSD ethereum busd token contract address
+     * @param _tokenManager token manager contract address
      */
-    constructor(IBUSD busd) public {
+    constructor(
+        address _hBUSD,
+        address _eBUSD,
+        address _tokenManager
+    ) public {
         owner = msg.sender;
         wards[msg.sender] = 1;
-        busd_ = busd;
+        hBUSD = IBUSD(_hBUSD);
+        eBUSD = _eBUSD;
+        tokenManager = _tokenManager;
+        TokenManager(tokenManager).registerToken(eBUSD, address(hBUSD));
+    }
+
+    /**
+    * @dev deregister token mapping in the token manager
+    */
+    function deregister() public auth {
+        TokenManager(tokenManager).removeToken(eBUSD, 0);
     }
 
     /**
@@ -51,11 +70,11 @@ contract BUSDHmyManager {
      */
     function burnToken(uint256 amount, address recipient) public {
         require(
-            busd_.transferFrom(msg.sender, address(this), amount),
+            hBUSD.transferFrom(msg.sender, address(this), amount),
             "HmyManager/could not transfer tokens from user"
         );
-        require(busd_.decreaseSupply(amount), "HmyManager/burn failed");
-        emit Burned(address(busd_), msg.sender, amount, recipient);
+        require(hBUSD.decreaseSupply(amount), "HmyManager/burn failed");
+        emit Burned(address(hBUSD), msg.sender, amount, recipient);
     }
 
     /**
@@ -74,9 +93,9 @@ contract BUSDHmyManager {
             "HmyManager/The lock event cannot be reused"
         );
         usedEvents_[receiptId] = true;
-        require(busd_.increaseSupply(amount), "HmyManager/mint failed");
+        require(hBUSD.increaseSupply(amount), "HmyManager/mint failed");
         require(
-            busd_.transfer(recipient, amount),
+            hBUSD.transfer(recipient, amount),
             "HmyManager/transfer after mint failed"
         );
         emit Minted(amount, recipient);
