@@ -83,7 +83,7 @@ contract HmyManager {
     /**
      * @dev deregister token mapping in the token manager
      */
-    function removeToken(address ethTokenAddr) public auth {
+    function removeToken(address ethTokenAddr) public {
         TokenManager(tokenManager).removeToken(ethTokenAddr, 0);
     }
 

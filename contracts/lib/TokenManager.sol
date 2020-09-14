@@ -98,9 +98,13 @@ contract TokenManager {
      * @param supply only allow removing mapping when supply, e.g., zero or 10**27
      */
     function removeToken(address ethTokenAddr, uint256 supply) public auth {
-        IERC20 erc20Token = IERC20(ethTokenAddr);
         require(
-            erc20Token.totalSupply() == supply,
+            mappedTokens[ethTokenAddr] != address(0),
+            "TokenManager/ethToken mapping does not exists"
+        );
+        IERC20 oneToken = IERC20(mappedTokens[ethTokenAddr]);
+        require(
+            oneToken.totalSupply() == supply,
             "TokenManager/remove has non-zero supply"
         );
         delete mappedTokens[ethTokenAddr];
