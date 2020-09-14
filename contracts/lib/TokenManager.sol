@@ -41,7 +41,12 @@ contract TokenManager {
      * @param ethTokenAddr address of the ethereum token
      * @return mintAddress of the mapped token
      */
-    function addToken(address ethTokenAddr) public auth returns (address) {
+    function addToken(
+        address ethTokenAddr,
+        string memory name,
+        string memory symbol,
+        uint8 decimals
+    ) public auth returns (address) {
         require(
             ethTokenAddr != address(0),
             "TokenManager/ethToken is a zero address"
@@ -51,12 +56,7 @@ contract TokenManager {
             "TokenManager/ethToken already mapped"
         );
 
-        ERC20Detailed tokenDetail = ERC20Detailed(ethTokenAddr);
-        BridgedToken bridgedToken = new BridgedToken(
-            tokenDetail.name(),
-            tokenDetail.symbol(),
-            tokenDetail.decimals()
-        );
+        BridgedToken bridgedToken = new BridgedToken(name, symbol, decimals);
         address bridgedTokenAddr = address(bridgedToken);
 
         // store the mapping and created address

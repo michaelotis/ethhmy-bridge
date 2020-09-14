@@ -2,7 +2,7 @@ require("dotenv").config();
 const Web3 = require("web3");
 const BN = require("bn.js");
 
-async function deployERC20() {
+async function deployERC20(name, symbol, decimals) {
   const web3 = new Web3(process.env.ETH_NODE_URL);
   let ethMasterAccount = web3.eth.accounts.privateKeyToAccount(
     process.env.ETH_MASTER_PRIVATE_KEY
@@ -16,6 +16,7 @@ async function deployERC20() {
   const txContract = await tokenContract
     .deploy({
       data: MyERC20Json.bytecode,
+      arguments: [name, symbol, decimals],
     })
     .send({
       from: ethMasterAccount,

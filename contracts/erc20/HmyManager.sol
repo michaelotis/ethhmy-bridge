@@ -65,12 +65,19 @@ contract HmyManager {
      * @dev map an ethereum token to harmony
      * @param ethTokenAddr ethereum token address to map
      */
-    function addToken(address ethTokenAddr) public returns (address) {
+    function addToken(
+        address ethTokenAddr,
+        string memory name,
+        string memory symbol,
+        uint8 decimals
+    ) public {
         address oneTokenAddr = TokenManager(tokenManager).addToken(
-            ethTokenAddr
+            ethTokenAddr,
+            name,
+            symbol,
+            decimals
         );
         mappings[ethTokenAddr] = oneTokenAddr;
-        return oneTokenAddr;
     }
 
     /**

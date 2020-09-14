@@ -28,6 +28,17 @@ async function checkEthBalance(contract, addr) {
   return await erc20Contract.methods.balanceOf(addr).call();
 }
 
+async function tokenDetails(contract) {
+  const web3 = new Web3(process.env.ETH_NODE_URL);
+  const MyERC20Json = require("../../build/contracts/MyERC20.json");
+  const erc20Contract = new web3.eth.Contract(MyERC20Json.abi, contract);
+  return [
+    await erc20Contract.methods.name().call(),
+    await erc20Contract.methods.symbol().call(),
+    await erc20Contract.methods.decimals().call(),
+  ];
+}
+
 async function approveEthManger(contractAddr, managerAddr, amount) {
   const web3 = new Web3(process.env.ETH_NODE_URL);
   let ethUserAccount = web3.eth.accounts.privateKeyToAccount(
@@ -60,11 +71,13 @@ async function lockToken(managerAddr, userAddr, amount) {
     EthManagerJson.abi,
     managerAddr
   );
-  let transaction = await managerContract.methods.lockToken(amount, userAddr).send({
-    from: ethUserAccount,
-    gas: process.env.ETH_GAS_LIMIT,
-    gasPrice: new BN(await web3.eth.getGasPrice()).mul(new BN(1)),
-  });
+  let transaction = await managerContract.methods
+    .lockToken(amount, userAddr)
+    .send({
+      from: ethUserAccount,
+      gas: process.env.ETH_GAS_LIMIT,
+      gasPrice: new BN(await web3.eth.getGasPrice()).mul(new BN(1)),
+    });
   return transaction.events.Locked;
 }
 
@@ -94,6 +107,7 @@ async function unlockToken(managerAddr, userAddr, amount, receiptId) {
 module.exports = {
   mintERC20,
   checkEthBalance,
+  tokenDetails,
   approveEthManger,
   lockToken,
   unlockToken,
